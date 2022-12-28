@@ -32,7 +32,8 @@ Alright! You are ready to go!
 Create a new project
 --------------------
 
-This documentation is heavily influenced by the following [site](https://spring.io/quickstart), which you can use OR follow this documentation.
+This documentation is heavily influenced by the following sites [one](https://spring.io/quickstart) and [two](https://spring.io/guides/gs/spring-boot/), which
+you can use OR follow this documentation.
 
 Create a new Spring Boot Project by going to <https://start.spring.io/>
 
@@ -88,3 +89,27 @@ Fetch the remote repository:
     git fetch upstream --tags
 
 
+Set up an IDE
+-------------
+
+Before we do anything else, let's bring the project into our IDE.
+
+Since the preferred IDE for this class is IntelliJ due to it being the more
+likely IDE used by professional Java developes, I'll only provide the
+most basic instructions to use it.
+
+In IntelliJ, select 'File -> New -> Projects from Existing Sources', and then
+browse to the folder where the **cs341-demo** folder repository is located.
+Click on the **cs341-demo** name (do NOT double-click it), then select
+'Open', which should allow IntelliJ to setup and configure the project.
+
+In the next screen, choose 'Import project from external model', and choose
+the 'Gradle' icon below it, then finally, select 'Create'.
+
+![Import Image](image/GradleImport.jpg?raw=true "GradleImport")
+
+You *may* have to enable gradle on the project by selecting the bell icon
+on the far left, and then enable Gradle (why, who knows?).
+
+For Eclipse, there are more instructions and plugins needed. The following
+article should get you started <https://www.eclipse.org/community/eclipse_newsletter/2018/february/springboot.php>.
