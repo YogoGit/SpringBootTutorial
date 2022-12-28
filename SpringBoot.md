@@ -32,8 +32,15 @@ Alright! You are ready to go!
 Create a new project
 --------------------
 
-This documentation is heavily influenced by the following sites [one](https://spring.io/quickstart) and [two](https://spring.io/guides/gs/spring-boot/), which
-you can use OR follow this documentation.
+The initial documentation is heavily influenced by the following sites:
+
+* [quickstart](https://spring.io/quickstart)
+* [spring-boot](https://spring.io/guides/gs/spring-boot/)
+* [IntelliJ](https://spring.io/guides/gs/intellij-idea/)
+
+Or, you can choose to follow this guide, which is MUCH more comprehensive.
+
+---
 
 Create a new Spring Boot Project by going to <https://start.spring.io/>
 
