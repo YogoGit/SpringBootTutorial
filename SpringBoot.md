@@ -120,3 +120,30 @@ on the far left, and then enable Gradle (why, who knows?).
 
 For Eclipse, there are more instructions and plugins needed. The following
 article should get you started <https://www.eclipse.org/community/eclipse_newsletter/2018/february/springboot.php>.
+
+Running Application
+-------------------
+
+To run the application from the command line, it's a simple matter of running
+gradle in the project directory
+
+    gradlew bootRun
+
+The command should be the same whether you are using Windows or MacOS.  (Note,
+on MacOS, you *may* need to provide the path as './gradlew' to start it up.
+
+The FIRST TIME you do this, it will download all of the dependencies for
+the project, which may take a bit. However, startup time for subsequent runs
+will be much faster as the downloads are all cached locally.
+
+After starting, you should eventually see a line that looks similar to the
+following.
+
+    2022-12-28T13:26:17.102-07:00  INFO 9483 --- [           main] edu.carroll.cs341.Cs341Application       : Started Cs341Application in 0.998 seconds (process running for 1.219)
+
+Open the following URL in your browser to verify the app is working:
+<http://localhost:8080>
+
+This should now return a Whitelabel Error Page as we've not created enough code
+to respond properly, but it should verify that your environment and
+dependencies are all setup properly.
