@@ -313,3 +313,32 @@ the test again. You should get a result similar to the following:
 
     HelloControllerTest > indexTest() FAILED
         java.lang.AssertionError at HelloControllerTest.java:23
+
+HTTP Response
+-------------
+
+So far, we've just returned simple strings from our application.  However,
+we may want to respond with more complex responses, such as errors based on
+information in the request and/or information we can glean from the user
+(such as in a cookie).
+
+To do this, we need to change the signature of our Controller method. There
+are multiple ways of doing this in Spring, but for today I'm choosing to
+do this using ResponseEntity return type in the method.
+
+Please update the method signature in HelloController to look like the following:
+
+    @GetMapping("/hello")
+        public ResponseEntity<String> index() {
+            return new ResponseEntity<>("Hello from Spring Boot!", HttpStatus.OK);
+        }
+
+Note, you'll need to add the ResponseEntity (org.springframework.http.ResponseEntity)
+and HttpStatus (org.springframework.http.HttpStatus) imports to the class.
+
+After committing the change, verify your repo is up-to-date with the reference
+repository code:
+
+```sh
+git diff hello_response
+```
