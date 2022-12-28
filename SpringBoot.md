@@ -132,6 +132,24 @@ following (src/main/java/edu/carroll/cs389/HelloController.java):
         }
     }
 
+Add the class to git with a proper commit message
+
+```sh
+git add src/main/java/edu/carroll/cs389/HelloController.java
+git commit -m "Controller for responding to root context requests"
+```
+
+Verify your repository is up-to-date with no uncommitted files by running
+a status command
+
+```sh
+git status
+```
+
+    On branch main
+    nothing to commit, working tree clean
+
+
 Running Application
 -------------------
 
