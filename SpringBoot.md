@@ -57,3 +57,26 @@ in this class) (either create a new directory or use an existing directory).
 Once in that directory, unpack the file in the top-level directory, which
 should create a new folder named cs341-demo containing the basic configuration
 for your demo project.
+
+In the newly created `cs341-demo` directory create a new git repository by running:
+
+    cd cs341-demo
+    git init
+
+```sh
+git add .
+git commit -m "Initial commit"
+```
+
+Throughout this tutorial you will be able to check your progress against the
+official tutorial.  To do this add the official tutorial as a new git remote
+named `upstream` by running:
+
+    git remote add upstream https://github.com/YogoGit/SpringBootTutorial.git
+
+
+Fetch the remote repository:
+
+    git fetch upstream --tags
+
+
