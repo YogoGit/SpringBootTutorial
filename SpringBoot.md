@@ -194,10 +194,10 @@ annotation:
 
     @GetMapping("/")
 
-This indicates that the type of request (GET) and the context ("/") will be
+This indicates that the type of operation (GET) and the context ("/") will be
 mapped to the method just below the annotation (the index() method).
 
-There are other types of requests (PUT, POST, DEL, etc...), and each request
+There are other types of operations (PUT, POST, DEL, etc...), and each request
 type has a unique annotation associated with the HTTP type.  You can also
 specify the routing using a different annotation, similar to the following
 
@@ -208,8 +208,11 @@ method.
 
     @RequestMapping(value = "/", method = { RequestMethod.GET, RequestMethod.POST })
 
-The syntax can be as complicated or as simple as you'd like, so see the
-documentation for more examples.
+Note, if you don't provide any method to the RequestMapping annotation, it
+responds to all HTTP operations. The syntax can get as complicated or as simple
+as you'd like, so see the documentation for more examples.
+
+---
 
 So, let's quickly change the mapping from the root context to a different
 context by modifying the annotation.
@@ -223,7 +226,7 @@ look like the following:
     }
 
 Restart the application, and open the following URL in your browser to verify
-the app is working:  
+the app is working:
 <http://localhost:8080/hello>
 
 With the updated context, you should get a slightly different message.
@@ -242,4 +245,71 @@ there is no longer any controller associated with that route any longer.
 
 <http://localhost:8080/hello>
 
-Should return a __Whitelabel Error Page__.
+This should return a __Whitelabel Error Page__.
+
+Unit Test
+---------
+
+Now that we have a controller that listens for a route, let's write a
+test to verify it works properly to ensure that future modifications don't
+break the application.
+
+
+First, the project should already contain a file to ensure the Spring
+application context is created properly for unit tests (src/test/java/edu/carroll/cs389/Cs389ApplicationTests.java).
+
+Note, by convention, the name of the test class is in the exact same package
+as the class that's being tested, and the class name is similar but simply
+appends __Test__ to the end of the class name. In this case, __Tests__ (plural)
+was appened to the end, for historical reasons.
+
+Add a new controller test class to your project (src/test/java/edu/carroll/cs389/HelloControllerTest.java).
+
+    package edu.carroll.cs389;
+
+    import static org.hamcrest.Matchers.equalTo;
+    import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+    import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+    import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+    import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+    import org.junit.jupiter.api.Test;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+    import org.springframework.test.web.servlet.MockMvc;
+
+    @WebMvcTest(HelloController.class)
+    public class HelloControllerTest {
+        @Autowired
+        private MockMvc mockMvc;
+
+        @Test
+        public void indexTest() throws Exception {
+            mockMvc.perform(get("/hello")).andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(equalTo("Hello from Spring Boot!")));
+        }
+    }
+
+After adding to the project, run your test using gradle:
+
+```sh
+gradlew test
+```
+
+    BUILD SUCCESSFUL in 7s
+    4 actionable tasks: 2 executed, 2 up-to-date
+
+Success.  Add the test file to your repo, commit it, and once completed, verify
+your code against the reference repository.
+
+```sh
+git diff unit_test
+```
+
+Once you've verified you have a valid unit test, either modify the controller
+class or the unit test class to change the string to no longer match, and re-run
+the test again. You should get a result similar to the following:
+
+    HelloControllerTest > indexTest() FAILED
+        java.lang.AssertionError at HelloControllerTest.java:23
