@@ -48,10 +48,13 @@ Create a new Spring Boot Project by going to <https://start.spring.io/>
   - Packaging: Jar
   - Java: 21
 
-Click the 'GENERATE' button at the bottom of the page, which should generate
-and then download the file cs341-demo.zip onto your laptop.
+Next, in the upper-left corner of the screen, Click on the 'Add dependencies'
+button, and scroll down until you see 'Spring Web', and then click to add it.
 
-Next, bring up a command line window and browse to the directory for projects
+Finally, click the 'GENERATE' button at the bottom of the page, which should
+create and then download the file cs341-demo.zip onto your laptop.
+
+Bring up a command line window and browse to the directory for projects
 in this class) (either create a new directory or use an existing directory).
 
 Once in that directory, unpack the file in the top-level directory, which
@@ -67,6 +70,11 @@ In the newly created `cs341-demo` directory create a new git repository by runni
 git add .
 git commit -m "Initial commit"
 ```
+
+At this point, I would *HIGHLY* recommend creating a new Github repository
+associated with your personal Github account, and then upload this project
+to github before proceeding. Instructions on how to accomplish this are
+not included in this tutorial.
 
 Throughout this tutorial you will be able to check your progress against the
 official tutorial.  To do this add the official tutorial as a new git remote
