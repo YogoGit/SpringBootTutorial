@@ -342,3 +342,53 @@ repository code:
 ```sh
 git diff hello_response
 ```
+
+Next, let's revert the index method to the root context, and add a new method
+which takes takes an argument.
+
+HelloController should now look like this:
+
+    @GetMapping("/")
+    public ResponseEntity<String> index() {
+        return new ResponseEntity<>("Hello from Spring Boot!", HttpStatus.OK);
+    }
+
+    @GetMapping("/user")
+    public ResponseEntity<String> user(@RequestParam("name")String username) {
+        return new ResponseEntity<>("Hello " + username + "!", HttpStatus.OK);
+    }
+
+The first GetMapping changed back to "/", and we have a new method user() which
+takes a String argument.
+
+Again, make sure to add the import for RequestParam (org.springframework.web.bind.annotation.RequestParam).
+
+Also, make sure to update the context in your unit test from "/hello" back to "/",
+otherwise your tests will fail.
+
+Verify the new method works correctly by accessing the following url
+
+<http://localhost:8080/user?name=Student>
+
+Commit the changed files after verifying everything works properly (unit tests
+as well), and verify your project is up-to-date with the reference repo.
+
+```sh
+git diff controller_param
+```
+
+---
+
+At this point, please write a unit test for your new HelloController method.
+Note, you'll need to figure out how to pass in arguments, and how to verify
+the response returned is valid.  You can choose to do an exact match, or a
+fuzzy match, you decide.
+
+After writing your test, verify it works, commit the code, and feel free to
+compare your test against the reference code. Note, the reference code Unit
+test is not necessarily any more or less correct than your implementation,
+it just shows ONE way of testing the method.
+
+```sh
+git diff param_test
+```
