@@ -96,6 +96,12 @@ Fetch the remote repository:
     git fetch upstream --tags
 
 
+Verify your repo is up-to-date with the remote repository code:
+
+```sh
+git diff spring_start
+```
+
 Set up an IDE
 -------------
 
@@ -148,14 +154,17 @@ git commit -m "Controller for responding to root context requests"
 ```
 
 Verify your repository is up-to-date with no uncommitted files by running
-a status command
-
-```sh
-git status
-```
+a `git status` command
 
     On branch main
     nothing to commit, working tree clean
+
+Finally, verify your project is up-to-date by comparing it against the
+source repo
+
+```sh
+git diff hello_controller
+```
 
 
 Running Application
