@@ -192,3 +192,62 @@ Open the following URL in your browser to verify the app is working:
 
 This should now return the text from the HelloController we coded above, as
 well as verify that your environment and dependencies are all setup properly.
+
+Routes
+------
+
+Spring routes HTTP requests to a controller using the annotation defined in
+the Controller class.  In the case of the HelloController, we use the following
+annotation:
+
+    @GetMapping("/")
+
+This indicates that the type of request (GET) and the context ("/") will be
+mapped to the method just below the annotation (the index() method).
+
+There are other types of requests (PUT, POST, DEL, etc...), and each request
+type has a unique annotation associated with the HTTP type.  You can also
+specify the routing using a different annotation, similar to the following
+
+    @RequestMapping(value = "/", method = RequestMethod.GET)
+
+This alternate syntax allows for mapping multiple requesst types to the same
+method.
+
+    @RequestMapping(value = "/", method = { RequestMethod.GET, RequestMethod.POST })
+
+The syntax can be as complicated or as simple as you'd like, so see the
+documentation for more examples.
+
+So, let's quickly change the mapping from the root context to a different
+context by modifying the annotation.
+
+In the HelloController class, modify the annotation on the index method to
+look like the following:
+
+    @GetMapping("/hello")
+    public String index() {
+        return "Hello from Spring Boot!";
+    }
+
+Restart the application, and open the following URL in your browser to verify
+the app is working:  
+<http://localhost:8080/hello>
+
+With the updated context, you should get a slightly different message.
+
+Commit the updated controller to git, and compare against the reference
+repository.
+
+```sh
+git add src/main/java/edu/carroll/cs341/HelloController.java
+git commit -m "Update route and changed output"
+git diff hello_route
+```
+
+Note, if you go back to the root context (/), you will receive an error as
+there is no longer any controller associated with that route any longer.
+
+<http://localhost:8080/>
+
+Should return a __Whitelabel Error Page__.
