@@ -32,7 +32,8 @@ Alright! You are ready to go!
 Create a new project
 --------------------
 
-This documentation is heavily influenced by the following [site](https://spring.io/quickstart), which you can use OR follow this documentation.
+This documentation is heavily influenced by the following sites [one](https://spring.io/quickstart) and [two](https://spring.io/guides/gs/spring-boot/), which
+you can use OR follow this documentation.
 
 Create a new Spring Boot Project by going to <https://start.spring.io/>
 
@@ -88,3 +89,19 @@ Fetch the remote repository:
     git fetch upstream
 
 
+Set up an IDE
+-------------
+
+Before we do anything else, let's bring the project into our IDE.
+
+Since the preferred IDE for this class is IntelliJ due to it being the more
+likely IDE used by professional Java developes, I'll only provide the
+instructions to use it.
+
+In IntelliJ, select 'File -> New -> Projects from Existing Sources', and then
+browse to the folder where the **cs389-demo** folder repository is located.
+Click on the **cs389-folder** name (do NOT double-click it), then select
+'Open', which should allow IntelliJ to setup and configure the project.
+
+For Eclipse, there are more instructions and plugins needed. The following
+article should get you started <https://www.eclipse.org/community/eclipse_newsletter/2018/february/springboot.php>.
