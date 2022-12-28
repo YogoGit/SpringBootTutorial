@@ -113,6 +113,25 @@ Click on the **cs389-folder** name (do NOT double-click it), then select
 For Eclipse, there are more instructions and plugins needed. The following
 article should get you started <https://www.eclipse.org/community/eclipse_newsletter/2018/february/springboot.php>.
 
+Create a Simple Web Application
+-------------------------------
+
+Now you can create a web controller for this simple web application, as the
+following (src/main/java/edu/carroll/cs389/HelloController.java):
+
+    package edu.carroll.cs389;
+
+    import org.springframework.web.bind.annotation.GetMapping;
+    import org.springframework.web.bind.annotation.RestController;
+
+    @RestController
+    public class HelloController {
+        @GetMapping("/")
+        public String index() {
+            return "Greetings from Spring Boot!";
+        }
+    }
+
 Running Application
 -------------------
 
@@ -136,6 +155,5 @@ following.
 Open the following URL in your browser to verify the app is working:
 <http://localhost:8080>
 
-This should now return a Whitelabel Error Page as we've not created enough code
-to respond properly, but it should verify that your environment and
-dependencies are all setup properly.
+This should now return the text from the HelloController we coded above, as
+well as verify that your environment and dependencies are all setup properly.
