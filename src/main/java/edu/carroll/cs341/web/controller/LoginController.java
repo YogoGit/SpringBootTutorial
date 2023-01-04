@@ -1,8 +1,10 @@
 package edu.carroll.cs341.web.controller;
 
 import edu.carroll.cs341.web.form.LoginForm;
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,8 +18,11 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public String loginPost(@ModelAttribute LoginForm loginForm) {
+    public String loginPost(@Valid @ModelAttribute LoginForm loginForm, BindingResult result) {
         System.out.println("User '" + loginForm.getUsername() + "' attempted login");
+        if (result.hasErrors()) {
+            return "login";
+        }
         return "redirect:/loginSuccess";
     }
 
