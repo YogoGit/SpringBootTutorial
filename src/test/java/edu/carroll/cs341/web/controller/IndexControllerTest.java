@@ -1,4 +1,4 @@
-package edu.carroll.cs341;
+package edu.carroll.cs341.web.controller;
 
 import static org.hamcrest.Matchers.containsString;
 
@@ -12,8 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(HelloController.class)
-public class HelloControllerTest {
+@WebMvcTest(IndexController.class)
+public class IndexControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
@@ -21,14 +21,7 @@ public class HelloControllerTest {
     public void indexTest() throws Exception {
         mockMvc.perform(get("/")).andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Hello, Student!")));
-    }
-
-    @Test
-    public void indexWithParamTest() throws Exception {
-        final String name = "You";
-        mockMvc.perform(get("/").param("name", name)).andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().string(containsString("Hello, " + name + "!")));
+                .andExpect(content().string(containsString("Welcome to the application!")))
+                .andExpect(content().string(containsString("login")));
     }
 }
