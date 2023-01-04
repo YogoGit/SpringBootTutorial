@@ -476,3 +476,36 @@ compare your implementation with the author's updated test.
 ```sh
 git diff template_tests
 ```
+
+Congratulations, you've now create a basic Java backend application, and
+with a bit of work, you can create both front and back end pages
+dynamically based on the user input.
+
+Spring Boot Devtools
+--------------------
+
+Once useful ability when developing web applications is to avoid the
+update/restart/refresh cycle whenever making changes. This process can
+eat up a lot of time.  To speed up this cycle, you can add the
+[spring-boot-devools](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/#using.devtools)
+module to your application.
+
+This enables a number of tools which speeds up the development
+process. I recommend adding this to your project by adding the following
+line to the build.gradle file in the dependencies section:
+
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+Update the file, verify if works by restarting your application, commit
+your code, and compare your file with the reference repository.
+
+```sh
+git diff devtools
+```
+
+Note, there are additional configuration steps you may need to take for this
+to work properly. Here is an older article that may provide some information
+to allow things to work better.
+
+<https://www.youtube.com/watch?v=BvIM9gNTDM4&t=9s>
+
