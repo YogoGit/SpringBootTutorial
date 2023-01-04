@@ -8,6 +8,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class LoginController {
@@ -18,16 +19,17 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public String loginPost(@Valid @ModelAttribute LoginForm loginForm, BindingResult result) {
-        System.out.println("User '" + loginForm.getUsername() + "' attempted login");
+    public String loginPost(@Valid @ModelAttribute LoginForm loginForm, BindingResult result, RedirectAttributes attrs) {
         if (result.hasErrors()) {
             return "login";
         }
+        attrs.addAttribute("username", loginForm.getUsername());
         return "redirect:/loginSuccess";
     }
 
     @GetMapping("/loginSuccess")
-    public String loginSuccess() {
+    public String loginSuccess(String username, Model model) {
+        model.addAttribute("username", username);
         return "loginSuccess";
     }
 
