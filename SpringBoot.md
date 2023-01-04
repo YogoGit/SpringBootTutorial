@@ -509,3 +509,84 @@ to allow things to work better.
 
 <https://www.youtube.com/watch?v=BvIM9gNTDM4&t=9s>
 
+Form Validation
+---------------
+
+Now that we have a working web application, let's do something a bit
+more complex. Specifically, let's traverse between a couple of web
+pages, and ask the user to supply some data to us and have the
+application provide some sort of validation that the data is correct.
+
+First thing, let's remove the HelloController and HelloControllerTest
+from our project (git rm et. al), and create a more aptly named
+IndexController and IndexControllerTest in their place, but this time,
+let's create some sub-packages to break out the application into
+different functional units. Note, by convention, the package names are
+not plural, and neither are the class names.
+
+src/main/java/edu/carroll/cs341/web/controller/IndexController.java:
+
+    package edu.carroll.cs341.web.controller;
+
+    import org.springframework.stereotype.Controller;
+    import org.springframework.web.bind.annotation.GetMapping;
+
+    @Controller
+    public class IndexController {
+        @GetMapping("/")
+        public String index() {
+            return "index";
+        }
+    }
+
+src/test/java/edu/carroll/cs341/web/controller/IndexControllerTest.java:
+
+    package edu.carroll.cs341.web.controller;
+
+    import static org.hamcrest.Matchers.containsString;
+
+    import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+    import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+    import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+    import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+    import org.junit.jupiter.api.Test;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+    import org.springframework.test.web.servlet.MockMvc;
+
+    @WebMvcTest(IndexController.class)
+    public class IndexControllerTest {
+        @Autowired
+        private MockMvc mockMvc;
+
+        @Test
+        public void indexTest() throws Exception {
+            mockMvc.perform(get("/")).andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(containsString("Welcome to the application!")))
+                    .andExpect(content().string(containsString("login")));
+        }
+    }
+
+Finally, modify the index template file at src/main/resources/templates/index.html:
+
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Welcome page</title>
+      </head>
+      <body>
+        <p>Welcome to the application!</p>
+        <br/>
+        <p><a href="#">login</a> to continue</p>
+      </body>
+    </html>
+
+Ensure your applications runs (login doesn't do anything yet) and your
+unit tests passed, and commit the code.
+
+```sh
+git diff simple_init
+```
