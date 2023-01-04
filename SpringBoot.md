@@ -462,3 +462,17 @@ repo, and verify your repo against the remote repository code:
 ```sh
 git diff request_param
 ```
+
+Updated Unit test
+-----------------
+
+Unfortunately, we now have a problem in that the Unit test is now
+failing. Try modifying your test to see if you can fix the unit test to
+be both flexible yet still able to test the actual index method.
+
+Ensure your tests pass, and then commit your code.  Once done, you can
+compare your implementation with the author's updated test.
+
+```sh
+git diff template_tests
+```
