@@ -576,3 +576,296 @@ unit tests passed, and commit the code.
 ```sh
 git diff simple_init
 ```
+
+We first need to determine what data is in the login form, and create a
+Java bean associated with the data.  We'll call that bean a LoginForm,
+and implementation is as follows:
+src/main/java/edu/carroll/cs389/web/form/LoginForm.java:
+
+    package edu.carroll.cs389.web.form;
+
+    public class LoginForm {
+        private String username;
+        private String password;
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+    }
+
+This bean will allow us to store two text fields that the user provides
+as a single submission.
+
+Next, let's create the HTML templates:
+
+First, src/main/resources/templates/login.html:
+
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Login page</title>
+      </head>
+      <body>
+        <center><h1>Login</h1></center>
+        <form action="#" th:action="@{/login}" th:object="${loginForm}" method="post">
+          <input type="text" th:field="*{username}" placeholder="Username"/><br/>
+          <input type="password" th:field="*{password}" placeholder="Password"/><br/>
+          <button type="submit">Login</button>
+        </form>
+      </body>
+    </html>
+
+Pay special attention to the **form** and **input** tags and their
+associated Thymeleaf tag attributes. We're using the LoginForm object
+and properties to both allow for setting the information from the
+back-end as well as store user-supplied information to it.
+
+Note that the above page is not styled at all, as we're just focusing on
+functionality, not looks for now, and I'm using a deprecated tag
+(**center**).
+
+Next, the success/failure template pages, just to allow us to see what's
+going on.
+
+src/main/resources/templates/loginSuccess.html:
+
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Success</title>
+      </head>
+      <body>
+        <p>Login successful</p>
+      </body>
+    </html>
+
+src/main/resources/templates/loginFailure.html:
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Failure</title>
+      </head>
+      <body>
+        <p>Login failed</p>
+      </body>
+    </html>
+
+* The case of the filenames is important, so MAKE SURE you match them up
+correctly as once the application is created and bundled up, it may not
+work if you didn't keep everything matched up properly.
+
+The next step is to create the LoginController at
+src/main/java/edu/carroll/cs389/web/controller/LoginController.java.
+
+    package edu.carroll.cs389.web.controller;
+
+    import edu.carroll.cs389.web.form.LoginForm;
+    import org.springframework.stereotype.Controller;
+    import org.springframework.ui.Model;
+    import org.springframework.web.bind.annotation.GetMapping;
+    import org.springframework.web.bind.annotation.ModelAttribute;
+    import org.springframework.web.bind.annotation.PostMapping;
+
+    @Controller
+    public class LoginController {
+        @GetMapping("/login")
+        public String loginGet(Model model) {
+            model.addAttribute("loginForm", new LoginForm());
+            return "login";
+        }
+
+        @PostMapping("/login")
+        public String loginPost(@ModelAttribute LoginForm loginForm) {
+            System.out.println("User '" + loginForm.getUsername() + "' attempted login");
+            return "redirect:/loginSuccess";
+        }
+
+        @GetMapping("/loginSuccess")
+        public String loginSuccess() {
+            return "loginSuccess";
+        }
+
+        @GetMapping("/loginFailure")
+        public String loginFailure() {
+            return "loginFailure";
+        }
+    }
+
+This is NOT the final version, but contains all of the code we need to
+demonstrate the ability to traverse between pages. We do not do any
+checking/validation in the loginPost method and just take the user's
+data directly and redirect the browser directly to the success
+page. We'll change this in a later step.
+
+The final step to having a working (not necessarily correct) application
+is to modify the index.html page to change the href from **#** to
+**/login** since everything is now hooked up.
+
+    <p><a href="/login">login</a> to continue!</p>
+
+At this point, you should be able to connect to the site, click on the
+login link, put some dummy data into the username/password field, and
+then click the 'Login' button and successfully login to the
+application. Whatever username you typed into the username field should
+be printed on the console, ie;
+
+    User 'MyName' attempted login
+
+Save, test, and then commit your code to your repository, and then you
+can compare your version to the reference repository.
+
+```sh
+git diff simple_login
+```
+
+Now, let's do something with the data, and ensure the user has provided
+all of the necessary information.
+
+First, we need to add the Spring validation dependency to the project,
+which is done in build.gradle:
+
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+Next, let's modify our LoginForm to add some Validation annotations to
+the fields. Both fields must be required, and let's make sure there are
+minimum character lengths on both the username (6) and password (8) fields.
+
+    @NotNull
+    @Size(min = 6, message = "Username must be at least 6 characters long")
+    private String username;
+
+    @NotNull
+    @Size(min = 8, message = "Password must be at least 8 characters long")
+    private String password;
+
+Next, let's add validation to the submission method for the login page.
+This is as simple as adding a **@Valid** annotation to the form you want
+validated, and adding a BindingResult parameter to the method.  With
+both of those changes to the method signature, you can simply check for
+any errors in the form, and if they exist, return the failed form.
+
+    @PostMapping("/login")
+    public String loginPost(@Valid @ModelAttribute LoginForm loginForm, BindingResult result) {
+        System.out.println("User '" + loginForm.getUsername() + "' attempted login");
+        if (result.hasErrors()) {
+            return "login";
+        }
+        return "redirect:/loginSuccess";
+    }
+
+
+For the errors to be displayed, we need to make some slight changes to
+the HTML template code, to add some error messages (see the span).
+
+    <form action="#" th:action="@{/login}" th:object="${loginForm}" method="post">
+      <input type="text" th:field="*{username}" placeholder="Username"/>
+      <span th:if="${#fields.hasErrors('username')}" th:errors="*{username}">Username error</span><br/>
+      <input type="password" th:field="*{password}" placeholder="Password"/>
+      <span th:if="${#fields.hasErrors('password')}" th:errors="*{password}">Password error</span><br/>
+      <button type="submit">Login</button>
+    </form>
+
+Again, styling is pretty bad, but the functionality is all there.
+
+Let's also make one tweak to the successful login page, and send in the
+name of the logged in username to the page.
+
+This requires changes to two files, the HTML template, and the
+LoginController.  First, the template file loginSuccessful.html gets a
+new **p** tag.
+
+    <body>
+      <p>Login successful</p>
+      <p th:text="'Welcome ' + ${username} + '.'"/>
+    </body>
+
+Next, LoginController gets two modifications, one to the loginPost
+method, and changes to the loginSuccess method.  For the former, we add
+a new parameter (**RedirectAttributes**), which allows us to send data
+to a page we redirect to.
+
+    @PostMapping("/login")
+    public String loginPost(@Valid @ModelAttribute LoginForm loginForm, BindingResult result, RedirectAttributes attrs) {
+        if (result.hasErrors()) {
+            return "login";
+        }
+        attrs.addAttribute("username", loginForm.getUsername());
+        return "redirect:/loginSuccess";
+    }
+
+    @GetMapping("/loginSuccess")
+    public String loginSuccess(String username, Model model) {
+        model.addAttribute("username", username);
+        return "loginSuccess";
+    }
+
+The latter accepts a new String parameter named username (note, we don't
+HAVE to use **@RequestParam** if the field is a String and the name of
+the field is identical to what is expected) and a Model so we can
+forward the data to the template.
+
+Let's do one final change to the application, and that's provide a
+custom error based on server-side persistent. Note, what was done is NOT
+the way that should be done for username/password validation, but was
+done for demonstration purposes.  As mentioned in the comments, if you
+do this in a real application, I will hunt you down and embarrass you in
+front of your friends.
+
+In the login.html template file, add a single line to display global
+error messages.
+
+    <form action="#" th:action="@{/login}" th:object="${loginForm}" method="post">
+      <span th:if="${#fields.hasGlobalErrors()}" th:errors="*{global}">Global error</span><br/>  <!-- Add this line -->
+      <input type="text" th:field="*{username}" placeholder="Username"/>
+
+In LoginController, add the following snippets:
+
+    @Controller
+    public class LoginController {
+        // XXX - If anything like this is used in a real application, I will hunt you down and embarrass you to all your peers.
+        private static final String validUser = "cs389user";
+        private static final String validPass = "supersecret";
+
+And, later in loginPost (note, I also removed the println statement).
+
+    @PostMapping("/login")
+    public String loginPost(@Valid @ModelAttribute LoginForm loginForm, BindingResult result, RedirectAttributes attrs) {
+        if (result.hasErrors()) {
+            return "login";
+        }
+        // Username does not have to match the case, but password must be an exact match.
+        // XXX - NEVER do password validation using a string match
+        if (!(validUser.equalsIgnoreCase(loginForm.getUsername()) &&
+              validPass.equals(loginForm.getPassword()))) {
+            result.addError(new ObjectError("globalError", "Username and password do not match known users"));
+            return "login";
+        }
+        ...
+
+At this point, only a single username/password combination will be
+allowed, which is hardcoded into the application code.
+
+Save, test, and then commit your code to your repository, and then you
+can compare your version to the reference repository.
+
+```sh
+git diff login_validation
+```
+
+Note, we're still missing unit tests for the new methods, which is bad,
+and should be corrected (but is not going to happen quite yet).
