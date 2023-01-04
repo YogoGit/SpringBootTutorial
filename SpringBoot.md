@@ -869,3 +869,308 @@ git diff login_validation
 
 Note, we're still missing unit tests for the new methods, which is bad,
 and should be corrected (but is not going to happen quite yet).
+
+
+SQL Backend Tier
+----------------
+
+At this point, we have a VERY basic application which contains at least
+one decent unit test. However, most real applications allow for storing
+data that can be referenced even if the application is restarted. The
+most common storage mechanism used if a RDBMS (Relational Database
+Management System), or SQL database.
+
+So, instead of having a single (or multiple) hardcoded username and
+password combinations that lives in good (VERY, VERY BAD!), we could
+instead lookup a valid username/password combination from the database
+to see if we have a match.
+
+As we do at the start of all backends, we need to add some additional
+dependencies to our project to bring in the new functionality. In this
+case, we're adding JPA (Java Persistence API), which will allow us to
+connect to our database. In addition, for this simple project, instead
+of spinning up an entire separate database server, we're going to be
+using H2, which allows us run everything as a built in process inside
+our application, greatly simplifying the setup. This is not an
+acceptable solutions for any modern application, but should suffice for
+demonstration purposes.
+
+In build.gradle, add the following dependencies:
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'com.h2database:h2'
+
+Next, we'll need to configure the database connection setup, which is
+done in the file src/main/resources/application.properties:
+
+    spring.datasource.url=jdbc:h2:file:./demoDb
+    spring.datasource.driverClassName=org.h2.Driver
+    spring.datasource.username=h2
+    spring.datasource.password=dbpass
+    spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+
+This sets up H2 as the database for the application, storing the files
+in the project directory with filenames starting with demoDb (ie;
+demoDb.db, etc..).
+
+If you run the application now, it will create an H2 database file
+containing all the structure necessary to run an application.
+
+To avoid committing the H2 database files, I'd add an entry to
+.gitignore to tell it to not consider the H2 database files part of the
+project files.
+
+I added the following lines to my .gitignore
+
+    # H2 database files
+    /demoDb*
+
+Now that we've got a database, lets create ourself a Model, which is the
+way that we interact with the database. Rather than creating tables and
+rows, we create a Java class that represents the table.
+
+Create a new package named **jpa** and a sub-package under it named
+**model**, and then create a new class named Login, which will map to
+our new database table, including all of the columns in the table.
+
+src/main/java/edu/carroll/cs389/jpa/model/Login.java:
+
+    package edu.carroll.cs389.jpa.model;
+
+    import java.util.Objects;
+
+    import jakarta.persistence.Column;
+    import jakarta.persistence.Entity;
+    import jakarta.persistence.GeneratedValue;
+    import jakarta.persistence.Id;
+    import jakarta.persistence.Table;
+
+    @Entity
+    @Table(name = "login")
+    public class Login {
+        private static final long serialVersionUID = 1L;
+
+        @Id
+        @GeneratedValue
+        private Integer id;
+
+        @Column(name = "username", nullable = false, unique = true)
+        private String username;
+
+        @Column(name = "password", nullable = false)
+        private String hashedPassword;
+
+        public Integer getId() {
+            return id;
+        }
+
+        public void setId(Integer id) {
+            this.id = id;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getHashedPassword() {
+            return hashedPassword;
+        }
+
+        public void setHashedPassword(String hashedPassword) {
+            this.hashedPassword = hashedPassword;
+        }
+
+        private static final String EOL = System.lineSeparator();
+        private static final String TAB = "\t";
+
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            builder.append("Login @ ").append(super.toString()).append("[").append(EOL);
+            builder.append(TAB).append("username=").append(username).append(EOL);
+            builder.append(TAB).append("hashedPassword=").append("****").append(EOL);
+            builder.append("]").append(EOL);
+            return builder.toString();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+
+            final Login login = (Login)o;
+            return username.equals(login.username) && hashedPassword.equals(login.hashedPassword);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(username, hashedPassword);
+        }
+    }
+
+Lots of the above code is boiler-plate and/or code that you want to have
+to make life easier (getter/setter, toString, equals, and hashCode), which can be
+generated by your IDE. The code is also very verbose in that I was very
+explicit in the naming of the tables and columns. By convention, many
+companies prefer to keep all of the database objects using a single
+case (not a mix of upper or lower case names), so I've followed the
+convention to be explicit in the names for both by using all lower-case
+names.
+
+The Id field for the table is a sequence number that is auto-generated
+by the database at insertion time, not the username.  So, in order to
+ensure that a username can't be shared, we added a unique attribute to
+the **@Column** annotation.
+
+The next thing we need to do is create some code that will allow us to
+access the data in the login table.  In Spring JPA, this is done with a
+JpaRepository.  We'll put the code in a new package, which is as
+follows:
+
+src/main/java/edu/carroll/cs389/jpa/repo/LoginRepository.java:
+
+    package edu.carroll.cs389.jpa.repo;
+
+    import java.util.List;
+
+    import edu.carroll.cs389.jpa.model.Login;
+    import org.springframework.data.jpa.repository.JpaRepository;
+
+    public interface LoginRepository extends JpaRepository<Login, Integer> {
+        // JPA throws an exception if we attempt to return a single object that doesn't exist, so return a list
+        // even though we only expect either an empty list of a single element.
+        List<Login> findByUsernameIgnoreCase(String username);
+    }
+
+Now, this is where things get interesting, and somewhat verbose. Good
+application design breaks up the business logic from the actual data,
+and breaks up the persistence from either of those. This model is called
+MVC, or Model (data), View (UI), and Controller (business logic/routing,
+etc...).
+
+To date, we've have a controller and a template, which makes up both the
+Controller and View instance, and we're currently modeling the
+Data. However, by convention, we want to add an additional business
+layer on top of the Data, which we'll call the service layer, which
+abstracts away the actual details of the data away from the UI. For
+this, we're going to create another service layer, which contains the
+operations we are using to operate on the data.
+
+So, let's create another package, this one in a new sub-package named
+service.  But, because we want to ensure that we do things in a more
+portable way (and to make it easier to test the service), we'll first
+create an interface that defines the type of business operations that we
+want to do, and then once that's been defined, we'll actually create the
+implementation.
+
+So, create an interface file, which we'll call LoginService, which will
+contain all the methods we need to do in order to properly implement a
+login service.
+
+src/main/java/edu/carroll/cs389/service/LoginService.java:
+
+    package edu.carroll.cs389.service;
+
+    import edu.carroll.cs389.web.form.LoginForm;
+
+    public interface LoginService {
+        /**
+         * Given a loginForm, determine if the information provided is valid, and the user exists in the system.
+         * @param form - Data containing user login information, such as username and password.
+         * @return true if data exists and matches what's on record, false otherwise
+         */
+        boolean validateUser(LoginForm form);
+    }
+
+Pretty straight forward, although we'll need to expand it in the future,
+as right now we have no way of adding users to the system, only validate
+users.
+
+Before going further, let's modify the LoginController to use the new
+service. We can cleanup the hard-coded username and mess we made in the
+controller previously.
+
+    public class LoginController {
+        private final LoginService loginService;
+
+        public LoginController(LoginService loginService) {
+            this.loginService = loginService;
+        }
+
+Next, the code for loginPost is much simpler:
+
+    @PostMapping("/login")
+    public String loginPost(@Valid @ModelAttribute LoginForm loginForm, BindingResult result, RedirectAttributes attrs) {
+        if (result.hasErrors()) {
+            return "login";
+        }
+        if (!loginService.validateUser(loginForm)) {
+            result.addError(new ObjectError("globalError", "Username and password do not match known users"));
+            return "login";
+        }
+        attrs.addAttribute("username", loginForm.getUsername());
+        return "redirect:/loginSuccess";
+    }
+
+With the interface and the changes, your application should now compile
+successfully, but will *NOT* work properly, as there are NO users in the
+database to match, and there's no actual code that implements
+validateUser().
+
+However, we're getting much closer to having something!  Verify
+everything compiles at this point, and then we'll move onto the last
+step of getting the coding completed, and that's creating the
+implementation of the LoginService.
+
+src/main/java/edu/carroll/cs389/service/LoginServiceImpl.java:
+
+    import edu.carroll.cs389.jpa.model.Login;
+    import edu.carroll.cs389.jpa.repo.LoginRepository;
+    import edu.carroll.cs389.web.form.LoginForm;
+    import org.springframework.stereotype.Service;
+
+    @Service
+    public class LoginServiceImpl implements LoginService {
+        private final LoginRepository loginRepo;
+
+        public LoginServiceImpl(LoginRepository loginRepo) {
+            this.loginRepo = loginRepo;
+        }
+
+        /**
+         * Given a loginForm, determine if the information provided is valid, and the user exists in the system.
+         *
+         * @param loginForm - Data containing user login information, such as username and password.
+         * @return true if data exists and matches what's on record, false otherwise
+         */
+        @Override
+        public boolean validateUser(LoginForm loginForm) {
+            // Always do the lookup in a case-insensitive manner (lower-casing the data).
+            List<Login> users = loginRepo.findByUsernameIgnoreCase(loginForm.getUsername());
+
+            // We expect 0 or 1, so if we get more than 1, bail out as this is an error we don't deal with properly.
+            if (users.size() != 1)
+                return false;
+            Login u = users.get(0);
+            // XXX - Using Java's hashCode is wrong on SO many levels, but is good enough for demonstration purposes.
+            // NEVER EVER do this in production code!
+            final String userProvidedHash = Integer.toString(loginForm.getPassword().hashCode());
+            if (u.getHashedPassword().equals(userProvidedHash))
+                return false;
+
+            // User exists, and the provided password matches the hashed password in the database.
+            return true;
+        }
+    }
+
+As you can tell, the service code knows how to use the database, but
+provides are more descriptive user interface so that developers can use
+more descriptive method names for describing the operations they want to
+accomplish.
+
