@@ -313,3 +313,75 @@ the test again. You should get a result similar to the following:
 
     HelloControllerTest > indexTest() FAILED
         java.lang.AssertionError at HelloControllerTest.java:23
+
+
+HTML Response
+-------------
+
+Till now, we've generated simple text as responses to our requests, however
+normal websites return entire HTML pages. There are MANY ways to do this,
+including creating the browser's HTML interface with a javascript front-end
+that interacts with the backend using REST calls (or similar), such as
+[Angular](https://angular.io/) or [React](https://reactjs.org/). Or, you can
+render the pages on the back-end and simply serve them to browser directly.
+For simplicity sakes, we're going to do the latter, but feel free to
+investigate full-fledged front-end environments that you can use to create
+the UI the browser interacts with.
+
+Now that it's been decided to create all the HTML content on the backend,
+we've still got a few frameworks to decide on. There are quite a few, but
+we have to choose one, and for this tutorial we're going to be using
+[Thymeleaf](https://www.thymeleaf.org/doc/tutorials/3.0/thymeleafspring.html).
+
+First, we need to add the dependency to our project in the build.gradle
+file.  In the dependencies sections, add the following line:
+
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+Note, we could have also simple selected this additional dependency when we
+were first creating the project on <https://start.spring.io/>.
+
+Thymeleaf stores it's resources file in the resources folder, which is located
+in src/main/resources/templates.
+
+Create a template file as the following following (src/main/resources/templates/index.html):
+
+    <!DOCTYPE HTML>
+    <html xmlns:th="http://www.thymeleaf.org">
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Serving HTML Content</title>
+      </head>
+      <body>
+        <p>Hello World!<p>
+      </body>
+    </html>
+
+Next, modify the code for HelloController to change the class from a
+@RestController to a normal @Controller, and instead of returning the
+content as the String, return the name of the template.  The file should
+look like the following:
+
+    package edu.carroll.cs389;
+
+    import org.springframework.stereotype.Controller;
+    import org.springframework.web.bind.annotation.GetMapping;
+
+    @Controller
+    public class HelloController {
+        @GetMapping("/hello")
+        public String index() {
+            return "index";
+        }
+    }
+
+Restart the application, and open the following URL in your browser to verify
+the app is returning the correct content:
+<http://localhost:8080/hello>
+
+Commit your updated code to your repo, and verify your repo against the
+remote repository code:
+
+```sh
+git diff thymeleaf_template
+```
