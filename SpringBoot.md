@@ -1258,3 +1258,161 @@ your version to the reference repository.
 ```sh
 git diff jpa_login
 ```
+
+Application Logging
+-------------------
+
+The last topic we're going to introduce is application logging. Bugs
+occur in code based on a variety of reasons, and we rarely ever know
+ahead of time the cause of the bug, so we must add in logging into our
+application so we can more easily determine the cause of bugs.
+
+In addition to logging, for large scale applications, the application is
+running in an environment such that the developer may not have direct
+access to the actual running instance, so the only way to debug the
+issue is to look at the logs that occurred prior-to, during, and after
+an error occurred.
+
+Using a logging framework allows the application to generate logs in a
+consistent manner that provides the developer much more context of
+what's going on. We'll be using the most common logging framework
+[Logback](https://logback.qos.ch/) used in Java applications, and
+setting up logging for the applications.
+
+First, for every class that we want to have logging enabled, we must
+generate a shared logger class. Doing this is relatively
+straight-forward, and we'll provide some good default configuration
+files you can use to setup logging.
+
+Per the spring recommendations, let's create the configuration file for
+logback, using the filename they recommend using.
+
+src/main/resources/logback-spring.xml:
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <configuration>
+      <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+          <pattern>%date - [%level] - from %logger in %thread
+    %n%message%n%xExce    ption%n</pattern>
+        </encoder>
+      </appender>
+
+      <property name="LOGS" value="./logs" />
+
+      <appender name="Logfile"
+    class="ch.qos.logback.core.rolling.RollingFileApp    ender">
+        <file>${LOGS}/spring-boot-logger.log</file>
+        <encoder>
+          <pattern>%date - [%level] - from %logger in %thread
+    %n%message%n%xExce    ption%n</pattern>
+        </encoder>
+
+        <rollingPolicy
+      class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy    ">
+          <!-- rollover daily and when the file reaches 10 MegaBytes -->
+          <fileNamePattern>${LOGS}/archived/spring-boot-logger-%d{yyyy-MM-dd}.%i
+         .log</fileNamePattern>
+          <timeBasedFileNamingAndTriggeringPolicy
+      class="ch.qos.logback.core.rol    ling.SizeAndTimeBasedFNATP">
+            <maxFileSize>10MB</maxFileSize>
+          </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+      </appender>
+
+      <!--
+        The logger name is typically the Java/Scala package name.
+        This configures the log level to log at for a package and its
+        children p    ackages.
+      -->
+      <!-- Overwrite level for a internal code - Commented out for now
+      <logger name="edu.carroll.cs389" level="DEBUG"/>
+      -->
+
+      <!-- Reduce DB startup chatter -->
+      <logger name="org.hibernate" level="INFO" />
+      <logger name="com.zaxxer.hikari" level="INFO" />
+
+      <!-- Default level is INFO -->
+      <root level="INFO">
+        <appender-ref ref="Console"/>
+        <appender-ref ref="Logfile"/>
+      </root>
+    </configuration>
+
+With this in place, for EVERY class that you want to add logging to, you
+need to add some boilerplate code. Note, there are ways to setup
+logging in a generic way, but as you will find out as you write code,
+you really need to write log messages that are specific to your
+implementation, to give the most context to the application developer
+reading the logs after-the-fact. In addition, you need to make sure that
+any information in your logs does not contain any information that could
+be compromise the users who are using your system. (For example, never
+log out information should as SSN and/or other financial information if
+that information could be tied to a particular user).
+
+Because the business logic we have is probably the most useful location
+for logging, we'll start with adding logging in that class.
+
+src/main/java/edu/carroll/cs389/service/LoginServiceImpl.java:
+
+    import org.slf4j.Logger;
+    import org.slf4j.LoggerFactory;
+
+Add the two log imports
+
+    @Service
+    public class LoginServiceImpl implements LoginService {
+        private static final Logger log = LoggerFactory.getLogger(LoginServiceImpl.class);
+
+Create the static Logger for the class (note, the class name MUST match
+the classname).
+
+    public boolean validateUser(LoginForm loginForm) {
+        log.info("validateUser: user '{}' attempted login", loginForm.getUsername());
+        // Always do the lookup in a case-insensitive manner (lower-casing the data).
+        List<Login> users = loginRepo.findByUsernameIgnoreCase(loginForm.getUsername());
+
+        // We expect 0 or 1, so if we get more than 1, bail out as this is an error we don't deal with properly.
+        if (users.size() != 1) {
+            log.debug("validateUser: found {} users", users.size());
+            return false;
+        }
+        Login u = users.get(0);
+        // XXX - Using Java's hashCode is wrong on SO many levels, but is good enough for demonstration purposes.
+        // NEVER EVER do this in production code!
+        final String userProvidedHash = Integer.toString(loginForm.getPassword().hashCode());
+        if (!u.getHashedPassword().equals(userProvidedHash)) {
+            log.debug("validateUser: password !match");
+            return false;
+        }
+
+        // User exists, and the provided password matches the hashed password in the database.
+        log.debug("validateUser: successful login");
+        return true;
+    }
+
+Addition of the log.info and log.debug lines. Choosing the correct level
+is based on experience, but a good first step is to use **INFO**
+messages for normal kind of operations that may lead to issues later,
+and **DEBUG** messages are a form of documentation, and they allow you
+to do a deeper dive into the behavior of the code if you suspect an
+issue. With proper debugging in palce, all it takes is a simple
+configuration file change and a redeploy, and your logging information
+can be greatly increased without having to make any coding changes.
+
+Last but not least, because the application is now generating logfiles
+into the log directory, we need to tell git to ignore all the files in
+the log directory.
+
+I added the following lines to my .gitignore
+
+    # Logfiles
+    logs/
+
+Verify you can run the code, commit it to your repo, and then compare
+your version to the reference repository.
+
+```sh
+git diff service_logging
+```
