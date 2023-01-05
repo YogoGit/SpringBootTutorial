@@ -908,10 +908,16 @@ done in the file src/main/resources/application.properties:
     spring.datasource.username=h2
     spring.datasource.password=dbpass
     spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+    spring.jpa.hibernate.ddl-auto=update
 
 This sets up H2 as the database for the application, storing the files
 in the project directory with filenames starting with demoDb (ie;
-demoDb.db, etc..).
+demoDb.db, etc..), and ensures that JPA will create and/or update the
+tables based on the provided models (defined below).  The last property
+is VERY dangerous, and should never be done in a production application,
+as creating and modifying the SQL database structure should normally not
+be done by the application code. However, for our demo and for quickly
+prototyping an application, it makes things easy.
 
 If you run the application now, it will create an H2 database file
 containing all the structure necessary to run an application.
@@ -1174,3 +1180,81 @@ provides are more descriptive user interface so that developers can use
 more descriptive method names for describing the operations they want to
 accomplish.
 
+The last thing we need to do is get a record added to the database
+containing at least one user/password pair, but first, we need to know
+the hashCode of our password.  Using the following class:
+
+    public class Pass {
+        public static void main(String[] args) {
+            final String hash = Integer.toString("supersecret".hashCode());
+            System.out.println(hash);
+        }
+    }
+
+I got the following output:
+
+    -1164577301
+
+So, I'd like to store that value in my database. Note, there are
+numerous ways to pre-populate the database at startup, most of them bad
+(including the provided solution). This should be done with a separate
+process that loads the data externally, but for purposes of the demo,
+we're populating the data using code.  (And, the code itself should
+containing the data should normally never be committed to a git repo, as
+credentials should never be in code.)
+
+The following class runs code at startup and determines if the default
+user has been added to the database, and if not, it creates the user and
+persists it to the DB.
+
+src/main/java/edu/carroll/cs389/DbInit.java:
+
+    package edu.carroll.cs389;
+
+    import java.util.List;
+
+    import edu.carroll.cs389.jpa.model.Login;
+    import edu.carroll.cs389.jpa.repo.LoginRepository;
+    import jakarta.annotation.PostConstruct;
+    import org.springframework.stereotype.Component;
+
+    // This class optionally pre-populates the database with login data.  In
+    // a real application, this would be done with a completely different
+    // method.
+    @Component
+    public class DbInit {
+        // XXX - This is wrong on so many levels....
+        private static final String defaultUsername = "cs389user";
+        private static final String defaultPassHash = "-1164577301";
+
+        private final LoginRepository loginRepo;
+
+        public DbInit(LoginRepository loginRepo) {
+            this.loginRepo = loginRepo;
+        }
+
+        // invoked during application startup
+        @PostConstruct
+        public void loadData() {
+            // If the user doesn't exist in the database, populate it
+            final List<Login> defaultUsers =
+        loginRepo.findByUsernameIgnoreCase(    defaultUsername);
+            if (defaultUsers.isEmpty()) {
+                Login defaultUser = new Login();
+                defaultUser.setUsername(defaultUsername);
+                defaultUser.setHashedPassword(defaultPassHash);
+                loginRepo.save(defaultUser);
+            }
+        }
+    }
+
+With this change in place, you should now be able to run the
+application, and successfully login to the application using the
+username/password information cs389user/supersecret.
+
+Verify you can run the code, commit it to your repo, and then compare
+your version to the reference repository.
+
+```sh
+git diff jpa_login
+```
