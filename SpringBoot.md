@@ -1458,3 +1458,193 @@ your version to the reference repository.
 ```sh
 git diff service_logging
 ```
+
+Service Unit Test
+-----------------
+
+Doing unit tests for HTML controllers is error prone, as often-times the
+developer creating the pages is often different from the person writing
+the backend, and their skillsets vary widely. So, most HTML controllers
+don't have much for unit tests.
+
+However, backend services with all the business logic are RIPE for
+testing, and are much easier to setup for testing. Plus, the value of
+the tests tend to have much greater value.
+
+So, the last thing we're going to do is create a unit test for the
+LoginService.
+
+Before doing that, let's add a convenience constructors and methods to
+make the code shorter.
+
+In the JPA Login model, let's add a constructor that takes two Strings,
+one the username, and the second the raw string password that converts
+it to a hashed value, along with a new setter that does the
+onversion. Note, since we added a custom constructor, we must also add a
+no-arg constructor, which is used internally by the JPA framework to
+work properly.
+
+In /src/main/java/edu/carroll/cs389/jpa/model/Login.java, add the
+following constructors.
+
+    public Login() {
+    }
+
+    public Login(String username, String rawPassword) {
+        this.username = username;
+        setRawPassword(rawPassword);
+    }
+
+And then the convenience method:
+
+    public void setRawPassword(String rawPassword) {
+        // XXX - This should *NEVER* be done in a real project
+        this.hashedPassword = Integer.toString(rawPassword.hashCode());
+    }
+
+Note, this method is just a setter, and it uses a completely different
+method name, and is not directly associated with the class
+properties/field names.
+
+With that done, let's setup some configuration files to be used for
+testing, since our initial unit test didn't have either database or
+logging configured, and we'd like to make sure our test environment is
+configured as closely to the normal environment as we can make it.
+
+Add the following configuration files, which should only be used during
+unit testing.
+
+src/test/resources/application.properties:
+
+    spring.datasource.url=jdbc:h2:mem:test;DB_CLOSE_ON_EXIT=FALSE
+    spring.datasource.driver-class-name=org.h2.Driver
+    spring.jpa.hibernate.ddl-auto=create
+
+Note, the database configure is much simpler than the production setup,
+as we're using an in-memory database. Using a COMPLETELY SEPARATE
+database for testing is not only common, it's almost certainly something
+you should do in your application. NEVER EVER write test code that
+writes to your production database, especially when you can easily (as
+we're showing here) configure the application to use a database during
+tests without effecting the normal production database.
+
+Next, add the logging configuration file, which is also simpler (no need
+to log to a file), with a couple of additions to decrease initialization
+logging and to increase logging in the concrete classes during testing.
+
+src/test/resources/logback-spring.xml:
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <configuration>
+      <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+          <pattern>%date - [%level] - from %logger in %thread %n%message%n%xExce    ption%n</pattern>
+        </encoder>
+      </appender>
+
+      <!-- Reduce DB startup chatter -->
+      <logger name="org.hibernate" level="WARN" />
+      <logger name="com.zaxxer.hikari" level="WARN" />
+
+      <!--- Spring boot has a lot of startup noise as well -->
+      <logger name="org.springframework" level="WARN" />
+
+      <!-- Increase verbosity for local classes during testing -->
+      <logger name="edu.carroll.cs389" level="DEBUG" />
+
+      <!-- Default level is INFO -->
+      <root level="INFO">
+        <appender-ref ref="Console"/>
+      </root>
+    </configuration>
+
+With these two configuration files, we can now create a unit test class
+for the LoginService.
+
+As before, it should exist in the same package as the class that's being
+tested, with **Test** appended to the name by convention.
+
+ src/test/java/edu/carroll/cs389/service/LoginServiceImplTest.java:
+
+    package edu.carroll.cs389.service;
+
+    import static org.springframework.test.util.AssertionErrors.assertFalse;
+    import static org.springframework.test.util.AssertionErrors.assertNotNull;
+    import static org.springframework.test.util.AssertionErrors.assertTrue;
+
+    import java.util.List;
+
+    import edu.carroll.cs389.jpa.model.Login;
+    import edu.carroll.cs389.jpa.repo.LoginRepository;
+    import org.junit.jupiter.api.BeforeEach;
+    import org.junit.jupiter.api.Test;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.boot.test.context.SpringBootTest;
+
+    @SpringBootTest
+    public class LoginServiceImplTest {
+        private static final String username = "testuser";
+        private static final String password = "testpass";
+
+        @Autowired
+        private LoginService loginService;
+
+        @Autowired
+        private LoginRepository loginRepo;
+
+        private Login fakeUser = new Login(username, password);
+
+        @BeforeEach
+        public void beforeTest() {
+            assertNotNull("loginRepository must be injected", loginRepo);
+            assertNotNull("loginService must be injected", loginService);
+
+            // Ensure dummy record is in the DB
+            final List<Login> users = loginRepo.findByUsernameIgnoreCase(username);
+            if (users.isEmpty())
+                loginRepo.save(fakeUser);
+        }
+
+        @Test
+        public void validateUserSuccessTest() {
+            assertTrue("validateUserSuccessTest: should succeed using the same user/pass info", loginService.validateUser(username, password));
+        }
+
+        @Test
+        public void validateUserExistingUserInvalidPasswordTest() {
+            assertFalse("validateUserExistingUserInvalidPasswordTest: should fail using a valid user, invalid pass", loginService.validateUser(username, password + "extra"));
+        }
+
+        @Test
+        public void validateUserInvalidUserValidPasswordTest() {
+            assertFalse("validateUserInvalidUserValidPasswordTest: should fail using an invalid user, valid pass", loginService.validateUser(username + "not", password));
+        }
+
+        @Test
+        public void validateUserInvalidUserInvalidPasswordTest() {
+            assertFalse("validateUserInvalidUserInvalidPasswordTest: should fail using an invalid user, valid pass", loginService.validateUser(username + "not", password + "extra"));
+        }
+    }
+
+This test should pass, and contains some very simple tests. Once could
+argue that the provided tests may be too simple (specifically, an
+invalid username with a 'valid' password may seem like a silly test to
+run, but perhaps there is a bug where the password is stored globally,
+and once stored, it becomes valid of all users or something silly like
+that).
+
+Unit tests should test for even weird error cases, especically if the
+cost for writing and running the tests is so small.
+
+Verify the entire project runs properly (both the actual application
+functionality as well as all the units tests), commit all your changes
+to your git repo, and then compare your version to the code in the
+reference repository.
+
+```sh
+git diff final_tests
+```
+
+Congratulations! At this point, we're done with this initial Spring
+Boot tutorial. We'll be going over each of the topics in much greater
+detail during class, but for now, you have completed the tutorial.
