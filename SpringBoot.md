@@ -1125,9 +1125,12 @@ Next, the code for loginPost is much simpler:
     }
 
 With the interface and the changes, your application should now compile
-successfully, but will *NOT* work properly, as there are NO users in the
-database to match, and there's no actual code that implements
-validateUser().
+successfully, but will exit during runtime as there is no implementation
+of the LoginService interface that can be Autowired to the constructor
+of LoginController.
+
+There are also NO users in the database to match, 
+and there's no actual code that implements validateUser().
 
 However, we're getting much closer to having something!  Verify
 everything compiles at this point, and then we'll move onto the last
@@ -1167,7 +1170,7 @@ src/main/java/edu/carroll/cs389/service/LoginServiceImpl.java:
             // XXX - Using Java's hashCode is wrong on SO many levels, but is good enough for demonstration purposes.
             // NEVER EVER do this in production code!
             final String userProvidedHash = Integer.toString(loginForm.getPassword().hashCode());
-            if (u.getHashedPassword().equals(userProvidedHash))
+            if (!u.getHashedPassword().equals(userProvidedHash))
                 return false;
 
             // User exists, and the provided password matches the hashed password in the database.
