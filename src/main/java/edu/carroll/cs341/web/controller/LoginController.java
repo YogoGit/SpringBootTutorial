@@ -32,7 +32,7 @@ public class LoginController {
             return "login";
         }
 
-        if (!loginService.validateUser(loginForm)) {
+        if (!loginService.validateUser(loginForm.getUsername(), loginForm.getPassword())) {
             result.addError(new ObjectError("globalError", "Username and password do not match known users"));
             return "login";
         }
