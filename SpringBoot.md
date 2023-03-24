@@ -1280,3 +1280,46 @@ your version to the reference repository.
 ```sh
 git diff jpa_login
 ```
+
+Coupling Issues
+---------------
+
+What we have created so far works fine, but in reality, we have a
+coupling/layering issue in the LoginService. Specifically, the method
+`validUser` takes a *LoginForm* argument, which is arguably an issue,
+because LoginForm is part of the HTML/web layer, and LoginService should
+be callable by any layer. If we decide to provide multiple front-ends
+to the application, such that the user could interact with a mobile
+app and/or a javascript front-end, they would almost certainly not
+use a LoginForm to accept the user's input.
+
+To fix this, we should modify the service to take data that is less
+web layer specific. This can be done a multitude of ways, including
+defining a new class that just contains the data the service needs, such
+as something that looks very much like LoginForm (without the web
+validation tags), or we can simply use two Strings, which is what we'll do.
+
+Modify the signature in LoginService to take two strings, which will
+require changes to the LoginServiceImpl and any classes that call it.
+
+src/main/java/edu/carroll/cs389/service/LoginService.java:
+
+    package edu.carroll.cs389.service;
+
+    public interface LoginService {
+        /**
+         * Given a loginForm, determine if the information provided is valid, and the user exists in the system.
+         * @param username - Username of the person attempting to login
+         * @param password - Raw password provided by the user logging in
+         * @return true if data exists and matches what's on record, false otherwise
+         */
+        boolean validateUser(String username, String password);
+    }
+
+I'll leave you to figure out the details for the changes, and once you've
+verified the code works as before, commit it to your repo,a nd then compare
+your updated version to the reference repository.
+
+```sh
+git diff login_layering
+```
