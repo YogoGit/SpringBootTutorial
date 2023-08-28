@@ -881,7 +881,7 @@ most common storage mechanism used if a RDBMS (Relational Database
 Management System), or SQL database.
 
 So, instead of having a single (or multiple) hardcoded username and
-password combinations that lives in good (VERY, VERY BAD!), we could
+password combinations that lives in code (VERY, VERY BAD!), we could
 instead lookup a valid username/password combination from the database
 to see if we have a match.
 
